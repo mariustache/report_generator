@@ -5,7 +5,7 @@ from utils import Info, Error
 
 class MainFrame(wx.Frame):
 
-    BUTTONS = ["Selecteaza data", "Genereaza raport de gestiune", "Genereaza jurnal de incasari si plati"]
+    BUTTONS = ["Selecteaza data", "Raport de gestiune", "Jurnal de incasari si plati"]
 
     def __init__(self, *args, **kw):
         wx.Frame.__init__(self, *args, **kw)
@@ -13,11 +13,19 @@ class MainFrame(wx.Frame):
         self._current_date = wx.DateTime.Now()
 
         self.panel = wx.Panel(self)
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        self.panel.SetSizer(sizer)
+        self.windowSizer = wx.BoxSizer(wx.VERTICAL)
+        self.windowSizer.Add(self.panel, 1, wx.ALL | wx.EXPAND)
 
         self.makeMenuBar()
+        self.grid = wx.GridBagSizer(3, 1)
         self.makeButtons()
+
+        self.crtDateText = wx.StaticText(self.panel)
+        self.grid.Add(self.crtDateText, (0, 1))
+
+        self.border = wx.BoxSizer()
+        self.border.Add(self.grid, 1, wx.ALL | wx.EXPAND, 5)
+        self.panel.SetSizerAndFit(self.border)
 
     def makeMenuBar(self):
         fileMenu = wx.Menu()
@@ -40,14 +48,12 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
 
     def makeButtons(self):
-        pos_x_const = 10
-        pos_y = 10
         for button_name in MainFrame.BUTTONS:
-            button = wx.Button(self.panel, self._button_id, button_name, wx.Point(pos_x_const, pos_y))
+            button = wx.Button(self.panel, self._button_id, button_name)
             button.name = button_name
             button.Bind(wx.EVT_BUTTON, self.OnButton, button)
+            self.grid.Add(button, (self._button_id, 0), flag=wx.EXPAND)
             self._button_id += 1
-            pos_y += button.GetDefaultSize().GetHeight()
 
     def OnExit(self, event):
         """Close the frame, terminating the application."""
@@ -67,15 +73,23 @@ class MainFrame(wx.Frame):
         name = event.GetEventObject().name
         if name == "Selecteaza data":
             calendarFrame = Calendar(self, None, title="Calendar")
-        elif name == "Genereaza raport de gestiune":
+        elif name == "Raport de gestiune":
             Info("Generated management report.")
-        elif name == "Genereaza jurnal de incasari si plati":
+        elif name == "Jurnal de incasari si plati":
             Info("Generated input/output journal.")
         else:
             Error("Unknown event.")
 
     def SetCurrentDate(self, date_val):
         self._current_date = date_val
+        if self._current_date.IsLaterThan(wx.DateTime.Now()):
+            color = wx.Colour(255, 0, 0)
+            warningDateDialog = wx.MessageDialog(self, "Data selectata depaseste ziua curenta.", style=wx.OK)
+            warningDateDialog.ShowModal()
+        else:
+            color = wx.StaticText.GetClassDefaultAttributes().colFg
+        self.crtDateText.SetForegroundColour(color)
+        self.crtDateText.SetLabel(self._current_date.Format("%d-%m-%Y"))
         Info("Current date: {}.".format(self._current_date))
 
 

@@ -9,7 +9,7 @@ from utils import Info
 
 if __name__ == "__main__":
     config = ConfigModule()
-    ini_keys = ["Intrari", "Produse", "Iesiri", "DataStart", "SoldInitial"]
+    ini_keys = ["Intrari", "Produse", "Iesiri"]
     for key in ini_keys:
         config.GetData(key)
     

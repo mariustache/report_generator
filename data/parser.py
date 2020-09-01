@@ -103,7 +103,7 @@ class DBFParserIntrari(DBFParser):
             return
         return self._record_objs[id_intrare]
     
-    def GetEntryFromDate(self, _date):
+    def GetRecordsFromDate(self, _date):
         return self._record_date_map[_date]
         
     def pprint(self):

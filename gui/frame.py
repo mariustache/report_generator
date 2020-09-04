@@ -5,7 +5,10 @@ from utils import Info, Error
 
 class MainFrame(wx.Frame):
 
-    BUTTONS = ["Selecteaza data", "Raport de gestiune", "Jurnal de incasari si plati"]
+    DATE_BUTTON = "Selecteaza data"
+    MGMT_BUTTON = "Raport de gestiune"
+    JOURNAL_BUTTON = "Jurnal de incasari si plati"
+    BUTTONS = [DATE_BUTTON, MGMT_BUTTON, JOURNAL_BUTTON]
 
     def __init__(self, *args, **kw):
         wx.Frame.__init__(self, *args, **kw)
@@ -18,6 +21,7 @@ class MainFrame(wx.Frame):
 
         self.makeMenuBar()
         self.grid = wx.GridBagSizer(3, 1)
+        self.buttons = dict()
         self.makeButtons()
 
         self.crtDateText = wx.StaticText(self.panel)
@@ -52,7 +56,9 @@ class MainFrame(wx.Frame):
             button = wx.Button(self.panel, self._button_id, button_name)
             button.name = button_name
             button.Bind(wx.EVT_BUTTON, self.OnButton, button)
+            # Vertical position in grid is the same as button id
             self.grid.Add(button, (self._button_id, 0), flag=wx.EXPAND)
+            self.buttons[button_name] = button
             self._button_id += 1
 
     def OnExit(self, event):
@@ -86,11 +92,31 @@ class MainFrame(wx.Frame):
             color = wx.Colour(255, 0, 0)
             warningDateDialog = wx.MessageDialog(self, "Data selectata depaseste ziua curenta.", style=wx.OK)
             warningDateDialog.ShowModal()
+            # Disable report buttons
+            self.DisableButton(MainFrame.MGMT_BUTTON)
+            self.DisableButton(MainFrame.JOURNAL_BUTTON)
+
         else:
             color = wx.StaticText.GetClassDefaultAttributes().colFg
+            # Enable report buttons
+            self.EnableButton(MainFrame.MGMT_BUTTON)
+            self.EnableButton(MainFrame.JOURNAL_BUTTON)
+                
         self.crtDateText.SetForegroundColour(color)
         self.crtDateText.SetLabel(self._current_date.Format("%d-%m-%Y"))
         Info("Current date: {}.".format(self._current_date))
+
+    def DisableButton(self, button_key):
+        if button_key in self.buttons:
+            self.buttons[button_key].Disable()
+        else:
+            Error("Key {} missing in buttons dictionary.".format(button_key))
+
+    def EnableButton(self, button_key):
+        if button_key in self.buttons:
+            self.buttons[button_key].Enable()
+        else:
+            Error("Key {} missing in buttons dictionary.".format(button_key))
 
 
 class Calendar(wx.Frame):

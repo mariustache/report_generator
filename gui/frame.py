@@ -77,11 +77,11 @@ class MainFrame(wx.Frame):
     
     def OnButton(self, event):
         name = event.GetEventObject().name
-        if name == "Selecteaza data":
+        if name == MainFrame.DATE_BUTTON:
             calendarFrame = Calendar(self, None, title="Calendar")
-        elif name == "Raport de gestiune":
+        elif name == MainFrame.MGMT_BUTTON:
             Info("Generated management report.")
-        elif name == "Jurnal de incasari si plati":
+        elif name == MainFrame.JOURNAL_BUTTON:
             Info("Generated input/output journal.")
         else:
             Error("Unknown event.")
@@ -95,7 +95,6 @@ class MainFrame(wx.Frame):
             # Disable report buttons
             self.DisableButton(MainFrame.MGMT_BUTTON)
             self.DisableButton(MainFrame.JOURNAL_BUTTON)
-
         else:
             color = wx.StaticText.GetClassDefaultAttributes().colFg
             # Enable report buttons

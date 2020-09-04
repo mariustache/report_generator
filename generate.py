@@ -12,9 +12,12 @@ from utils import Info
 
 if __name__ == "__main__":
     config = ConfigModule()
-    ini_keys = ["Intrari", "Produse", "Iesiri"]
-    for key in ini_keys:
-        config.GetData(key)
+
+    parser_iesiri = DBFParserIesiri(config.GetDataFromKey("Iesiri"))
+    parser_intrari = DBFParserIntrari(config.GetDataFromKey("Intrari"))
+    parser_produse = DBFParserProduse(config.GetDataFromKey("Produse"))
+    print(parser_intrari.GetRecordsFromNir("2920"))
+    print(parser_intrari.GetRecordFromId("15488"))
     """
     parser_iesiri = DBFParserIesiri(config.GetData("Iesiri"))
     parser_intrari = DBFParserIntrari(config.GetData("Intrari"))

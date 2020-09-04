@@ -25,7 +25,7 @@ class ConfigModule:
         if not COMMON_SECTION in self._config:
             Error("Section {} does not exist.".format(COMMON_SECTION))
     
-    def GetData(self, ini_key):
+    def GetDataFromKey(self, ini_key):
         value = self._config[COMMON_SECTION].get(ini_key)
         Info("Reading {}/{} from .ini file: {}".format(COMMON_SECTION, ini_key, value))
         return value

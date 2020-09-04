@@ -21,6 +21,9 @@ class Iesire:
         output += "TOTAL:  {}\n".format(self.total)
         output += "BONURI: {}\n".format(self.nr_bonuri)
         print(output)
+    
+    def DumpToDataFrame(self):
+        pass
 
         
 class Intrare:
@@ -54,6 +57,9 @@ class Intrare:
         self.produse.append(produs)
         self.total_vanz += produs.total_vanz
 
+    def DumpToDataFrame(self):
+        pass
+
 
 class Produs:
 
@@ -82,3 +88,6 @@ class Produs:
         output += "PRET VANZARE:   {}\n".format(self.pret_vanz)
         print(output)
     
+    def DumpToDataFrame(self):
+        pass
+        

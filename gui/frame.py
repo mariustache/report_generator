@@ -80,8 +80,10 @@ class MainFrame(wx.Frame):
         if name == MainFrame.DATE_BUTTON:
             calendarFrame = Calendar(self, None, title="Calendar")
         elif name == MainFrame.MGMT_BUTTON:
+            # TODO
             Info("Generated management report.")
         elif name == MainFrame.JOURNAL_BUTTON:
+            # TODO
             Info("Generated input/output journal.")
         else:
             Error("Unknown event.")

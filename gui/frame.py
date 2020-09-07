@@ -1,7 +1,9 @@
 import wx
 import wx.adv
+import pandas as pd
 
-from data.generator import ReportGenerator
+from data.generator import JournalGenerator
+from data.generator import ManagementGenerator
 from utils import Info
 from utils import Error
 
@@ -82,17 +84,16 @@ class MainFrame(wx.Frame):
         if name == MainFrame.DATE_BUTTON:
             calendarFrame = Calendar(self, None, title="Calendar")
         elif name == MainFrame.MGMT_BUTTON:
-            ReportGenerator.Instance().GenerateManagementReport(self._current_date)
+            ManagementGenerator.Instance().Generate(self._current_date)
             Info("Generated management report.")
         elif name == MainFrame.JOURNAL_BUTTON:
-            ReportGenerator.Instance().GenerateJournal(self._current_date)
+            JournalGenerator.Instance().Generate(self._current_date)
             Info("Generated input/output journal.")
         else:
             Error("Unknown event.")
 
     def SetCurrentDate(self, date_val):
-        self._current_date = date_val
-        if self._current_date.IsLaterThan(wx.DateTime.Now()):
+        if date_val.IsLaterThan(wx.DateTime.Now()):
             color = wx.Colour(255, 0, 0)
             warningDateDialog = wx.MessageDialog(self, "Data selectata depaseste ziua curenta.", style=wx.OK)
             warningDateDialog.ShowModal()
@@ -104,9 +105,11 @@ class MainFrame(wx.Frame):
             # Enable report buttons
             self.EnableButton(MainFrame.MGMT_BUTTON)
             self.EnableButton(MainFrame.JOURNAL_BUTTON)
-                
+
         self.crtDateText.SetForegroundColour(color)
-        self.crtDateText.SetLabel(self._current_date.Format("%d-%m-%Y"))
+        self.crtDateText.SetLabel(date_val.Format("%d-%m-%Y"))
+        
+        self._current_date = pd.to_datetime(date_val.Format("%Y%m%d"))
         Info("Current date: {}.".format(self._current_date))
 
     def DisableButton(self, button_key):

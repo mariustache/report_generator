@@ -31,11 +31,19 @@ class DBFParser:
     def GetData(self):
         return self._dataFrame
 
-    def GetRecordFromPosition(self, position):
+    def GetDataWithPosition(self, position):
         return self._dataFrame.loc[[position]]
 
-    def GetRecordFromValue(self, record_key, record_value):
+    def GetDataWithValue(self, record_key, record_value):
         mask = self._dataFrame[record_key] == record_value
+        return self._dataFrame.loc[mask]
+
+    def GetDataWithDate(self, date):
+        mask = self._dataFrame["DATA"] == date
+        return self._dataFrame.loc[mask]
+
+    def GetDataFromDate(self, start_date):
+        mask = self._dataFrame["DATA"] >= start_date
         return self._dataFrame.loc[mask]
 
     def PrintData(self):

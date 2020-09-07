@@ -4,7 +4,8 @@ from config.config import ConfigModule
 from data.parser import DBFParserIesiri
 from data.parser import DBFParserIntrari
 from data.parser import DBFParserProduse
-from data.generator import ReportGenerator
+from data.generator import JournalGenerator
+from data.generator import ManagementGenerator
 
 from gui.frame import MainFrame
 
@@ -18,7 +19,8 @@ if __name__ == "__main__":
     parser_intrari = DBFParserIntrari(config.GetDataFromKey("Intrari"))
     parser_produse = DBFParserProduse(config.GetDataFromKey("Produse"))
 
-    generator = ReportGenerator()
+    journal_generator = JournalGenerator()
+    management_generator = ManagementGenerator()
     
     app = wx.App()
     frm = MainFrame(None, title="Generator Rapoarte")

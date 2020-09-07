@@ -1,7 +1,9 @@
 import wx
 import wx.adv
 
-from utils import Info, Error
+from data.generator import ReportGenerator
+from utils import Info
+from utils import Error
 
 class MainFrame(wx.Frame):
 
@@ -80,10 +82,10 @@ class MainFrame(wx.Frame):
         if name == MainFrame.DATE_BUTTON:
             calendarFrame = Calendar(self, None, title="Calendar")
         elif name == MainFrame.MGMT_BUTTON:
-            # TODO
+            ReportGenerator.Instance().GenerateManagementReport(self._current_date)
             Info("Generated management report.")
         elif name == MainFrame.JOURNAL_BUTTON:
-            # TODO
+            ReportGenerator.Instance().GenerateJournal(self._current_date)
             Info("Generated input/output journal.")
         else:
             Error("Unknown event.")

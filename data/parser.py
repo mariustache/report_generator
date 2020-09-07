@@ -1,12 +1,6 @@
 
-import csv
-from operator import itemgetter
 from dbfread import DBF
 from pandas import DataFrame
-
-from data.struct import Iesire
-from data.struct import Intrare
-from data.struct import Produs
 
 from utils import Error
 from utils import Debug
@@ -16,6 +10,7 @@ from utils import Info
 class DBFParser:
     
     FIELDS = list()
+    INSTANCE = None
 
     def __init__(self, dbf_name):
         dbf = DBF(dbf_name)
@@ -36,16 +31,32 @@ class DBFParser:
     def GetData(self):
         return self._dataFrame
 
+    def GetRecordFromPosition(self, position):
+        return self._dataFrame.loc[[position]]
+
+    def GetRecordFromValue(self, record_key, record_value):
+        mask = self._dataFrame[record_key] == record_value
+        return self._dataFrame.loc[mask]
+
     def PrintData(self):
         print(self._dataFrame)
+
+    def PrintEntry(self, position):
+        print(self._dataFrame.loc[[position]])
+    
+    @classmethod
+    def GetParser(cls):
+        if cls.INSTANCE is None:
+            Error("Trying to access instance of {} class, but it does not exist.".format(cls.__name__))
+        return cls.INSTANCE
 
 
 class DBFParserIesiri(DBFParser):
 
     FIELDS = {
-        "NR_IESIRE": "object",
-        "ID_IESIRE": "object",
-        "DENUMIRE": "object",
+        "NR_IESIRE": "string",
+        "ID_IESIRE": "string",
+        "DENUMIRE": "string",
         "DATA": "datetime64",
         "TOTAL": "float64",
         "NR_BONURI": "int64"
@@ -53,52 +64,41 @@ class DBFParserIesiri(DBFParser):
 
     def __init__(self, dbf_name):
         DBFParser.__init__(self, dbf_name)
+        DBFParserIesiri.INSTANCE = self
 
 
 class DBFParserIntrari(DBFParser):
 
     FIELDS = {
-        "ID_INTRARE": "object",
-        "NR_NIR": "object",
-        "NR_INTRARE": "object",
-        "DENUMIRE": "object",
+        "ID_INTRARE": "string",
+        "NR_NIR": "string",
+        "NR_INTRARE": "string",
+        "DENUMIRE": "string",
         "DATA": "datetime64",
         "TOTAL": "float64",
-        "TIP": "object"
+        "TIP": "string"
     }
 
     def __init__(self, dbf_name):
         DBFParser.__init__(self, dbf_name)
-    
-    def GetRecordFromId(self, id_intrare):
-        print(self._dataFrame["ID_INTRARE"])
-        mask = self._dataFrame["ID_INTRARE"] == id_intrare
-        return self._dataFrame.loc[mask]
-    
-    def GetRecordsFromNir(self, nr_nir):
-        print(self._dataFrame["NR_NIR"])
-        mask = self._dataFrame["NR_NIR"] == nr_nir
-        return self._dataFrame.loc[mask]
-        
-    def pprint(self):
-        for key in self._record_objs:
-            self._record_objs[key].pprint()
+        DBFParserIntrari.INSTANCE = self
 
 
 class DBFParserProduse(DBFParser):
 
     FIELDS = {
-        "ID_U": "object",
-        "ID_INTRARE": "object",
-        "DENUMIRE": "object",
-        "DEN_GEST": "object",
-        "DEN_TIP": "object",
-        "TVA_ART": "object",
+        "ID_U": "string",
+        "ID_INTRARE": "string",
+        "DENUMIRE": "string",
+        "DEN_GEST": "string",
+        "DEN_TIP": "string",
+        "TVA_ART": "string",
         "CANTITATE": "float64",
         "PRET_VANZ": "float64"
     }
 
     def __init__(self, dbf_name):
         DBFParser.__init__(self, dbf_name)
+        DBFParserProduse.INSTANCE = self
 
     

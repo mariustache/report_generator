@@ -51,10 +51,6 @@ class MainFrame(wx.Frame):
 
         self.SetMenuBar(menuBar)
 
-        self.Bind(wx.EVT_MENU, self.OnHello, helloItem)
-        self.Bind(wx.EVT_MENU, self.OnExit,  exitItem)
-        self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
-
     def makeButtons(self):
         for button_name in MainFrame.BUTTONS:
             button = wx.Button(self.panel, self._button_id, button_name)
@@ -64,20 +60,10 @@ class MainFrame(wx.Frame):
             self.grid.Add(button, (self._button_id, 0), flag=wx.EXPAND)
             self.buttons[button_name] = button
             self._button_id += 1
-
-    def OnExit(self, event):
-        """Close the frame, terminating the application."""
-        self.Close(True)
-
-    def OnHello(self, event):
-        """Say hello to the user."""
-        wx.MessageBox("Hello again from wxPython")
-
-    def OnAbout(self, event):
-        """Display an About Dialog"""
-        wx.MessageBox("This is a wxPython Hello World sample",
-                      "About Hello World 2",
-                      wx.OK|wx.ICON_INFORMATION)
+        
+        # Disable report buttons
+        self.DisableButton(MainFrame.MGMT_BUTTON)
+        self.DisableButton(MainFrame.JOURNAL_BUTTON)
     
     def OnButton(self, event):
         name = event.GetEventObject().name
@@ -86,9 +72,15 @@ class MainFrame(wx.Frame):
         elif name == MainFrame.MGMT_BUTTON:
             ManagementGenerator.Instance().Generate(self._current_date)
             Info("Generated management report.")
+            infoDialog = wx.MessageDialog(self, "Raportul de gestiune a fost generat.", style=wx.OK)
+            infoDialog.ShowModal()
+            #ManagementGenerator.Instance().GetDataFrameList()
+
         elif name == MainFrame.JOURNAL_BUTTON:
             JournalGenerator.Instance().Generate(self._current_date)
             Info("Generated input/output journal.")
+            infoDialog = wx.MessageDialog(self, "Jurnalul de incasari si plati a fost generat.", style=wx.OK)
+            infoDialog.ShowModal()
         else:
             Error("Unknown event.")
 

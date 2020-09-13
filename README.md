@@ -1,6 +1,6 @@
 # report_generator
 
 TODO: 
- - create output format for "Raport de Gestiune" and "Jurnal Incasari si Plati"
- - add button event functionality
- - create methods for extracting data from DataFrame
+ - Create a Printer Frame: print, print preview, page setup.
+ - Convert DataFrame to printout format
+ 

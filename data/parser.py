@@ -108,5 +108,9 @@ class DBFParserProduse(DBFParser):
     def __init__(self, dbf_name):
         DBFParser.__init__(self, dbf_name)
         DBFParserProduse.INSTANCE = self
+    
+    def GetDataWithIdIntrare(self, id_intrare):
+        mask = self._dataFrame["ID_INTRARE"] == id_intrare
+        return self._dataFrame.loc[mask]
 
     

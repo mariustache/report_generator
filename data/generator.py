@@ -33,12 +33,12 @@ class JournalGenerator(ReportGenerator):
         ReportGenerator.__init__(self)
         JournalGenerator.INSTANCE = self
     
-    def Generate(self, start_date, plati_numerar=0, plati_alte=0, incasari=0):
+    def Generate(self, start_date, stop_date, plati_numerar=0, plati_alte=0, incasari=0):
         current_date = start_date
         intrari_df = DBFParserIntrari.GetParser().GetDataWithDate(current_date)
         iesiri_df = DBFParserIesiri.GetParser().GetDataWithDate(current_date)
 
-        while current_date <= pd.to_datetime(wx.DateTime.Now().Format("%Y%m%d")):
+        while current_date <= stop_date:
             _out_list = list()
             if not intrari_df.empty and not iesiri_df.empty:
                 _out_list.append([current_date.strftime("%d-%m-%Y"), 0, "TOTAL PRECEDENT", incasari, plati_numerar, plati_alte])
@@ -81,7 +81,7 @@ class ManagementGenerator(ReportGenerator):
         ReportGenerator.__init__(self)
         ManagementGenerator.INSTANCE = self
     
-    def Generate(self, start_date, sold_precedent=0):
+    def Generate(self, start_date, stop_date, sold_precedent=0):
         """
         Intrari, Iesiri and Produse are needed.
         Two tables.
@@ -98,7 +98,7 @@ class ManagementGenerator(ReportGenerator):
         intrari_df = DBFParserIntrari.GetParser().GetDataWithDate(current_date)
         iesiri_df = DBFParserIesiri.GetParser().GetDataWithDate(current_date)
 
-        while current_date <= pd.to_datetime(wx.DateTime.Now().Format("%Y%m%d")):
+        while current_date <= stop_date:
             _out_list = list()
             if not intrari_df.empty and not iesiri_df.empty:
                 _out_list.append(["Data: {}".format(current_date.strftime("%d-%m-%Y")), "Sold precedent", sold_precedent])

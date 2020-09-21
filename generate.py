@@ -25,8 +25,8 @@ if __name__ == "__main__":
     plati_alte = config.GetPlatiAlte()
     incasari = config.GetIncasari()
     
-    journal_generator = JournalGenerator()
-    management_generator = ManagementGenerator()
+    journal_generator = JournalGenerator(start_date, plati_numerar, plati_alte, incasari)
+    management_generator = ManagementGenerator(start_date, sold_precedent)
     
     app = wx.App()
     frm = MainFrame(None, title="Generator Rapoarte")

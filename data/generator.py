@@ -29,9 +29,14 @@ class JournalGenerator(ReportGenerator):
 
     COLUMNS = ["Data", "Documentul (felul, nr.)", "Felul operatiunii (explicatii)", "Incasari (numerar)", "Plati (numerar)", "Plati (alte)"]
 
-    def __init__(self):
+    def __init__(self, start_date, plati_numerar=0, plati_alte=0, incasari=0):
         ReportGenerator.__init__(self)
         JournalGenerator.INSTANCE = self
+
+        self.start_date = start_date
+        self.plati_numerar = plati_numerar
+        self.plati_alte = plati_alte
+        self.incasari = incasari
     
     def Generate(self, start_date, stop_date, plati_numerar=0, plati_alte=0, incasari=0):
         current_date = start_date
@@ -77,9 +82,11 @@ class ManagementGenerator(ReportGenerator):
     
     COLUMNS = ["Numar document", "Explicatii", "Valoare lei (Marfuri)"]
 
-    def __init__(self):
+    def __init__(self, start_date, sold_precedent):
         ReportGenerator.__init__(self)
         ManagementGenerator.INSTANCE = self
+        self.start_date = start_date
+        self.sold_precedent = sold_precedent
     
     def Generate(self, start_date, stop_date, sold_precedent=0):
         """

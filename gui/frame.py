@@ -7,6 +7,7 @@ from data.generator import ManagementGenerator
 from utils import Info
 from utils import Error
 
+
 class MainFrame(wx.Frame):
 
     DATE_BUTTON = "Selecteaza data"
@@ -16,87 +17,75 @@ class MainFrame(wx.Frame):
 
     def __init__(self, *args, **kw):
         wx.Frame.__init__(self, *args, **kw)
-        self._button_id = 0
+
         self._current_date = wx.DateTime.Now()
 
-        self.panel = wx.Panel(self)
-        self.windowSizer = wx.BoxSizer(wx.VERTICAL)
-        self.windowSizer.Add(self.panel, 1, wx.ALL | wx.EXPAND)
+        self.CreateMenuBar()
+        self.CreatePanels()
+        self.CreateButtons()
+        self.CreateTextBoxes()
+        self.CreateGridBag()
 
-        self.makeMenuBar()
+        self.BindButtons()
+        self.AddBorder()
+
+    def CreateMenuBar(self):
+        pass # TODO
+
+    def CreatePanels(self):
+        self.buttonPanel = wx.Panel(self)
+
+    def CreateGridBag(self):
         self.grid = wx.GridBagSizer(3, 1)
-        self.buttons = dict()
-        self.makeButtons()
-
-        self.crtDateText = wx.StaticText(self.panel)
+        self.grid.Add(self.date_button, (0, 0), flag=wx.EXPAND)
+        self.grid.Add(self.management_button, (1, 0), flag=wx.EXPAND)
+        self.grid.Add(self.journal_button, (2, 0), flag=wx.EXPAND)
         self.grid.Add(self.crtDateText, (0, 1))
 
+    def CreateButtons(self):
+        self.date_button = wx.Button(self.buttonPanel, 0, MainFrame.DATE_BUTTON)
+        self.management_button = wx.Button(self.buttonPanel, 1, MainFrame.MGMT_BUTTON)
+        self.journal_button = wx.Button(self.buttonPanel, 2, MainFrame.JOURNAL_BUTTON)
+
+        self.DisableReportButtons()
+    
+    def BindButtons(self):
+        self.date_button.Bind(wx.EVT_BUTTON, self.OnDateButton)
+        self.management_button.Bind(wx.EVT_BUTTON, self.OnManagementButton)
+        self.journal_button.Bind(wx.EVT_BUTTON, self.OnJournalButton)
+
+    def AddBorder(self):
         self.border = wx.BoxSizer()
         self.border.Add(self.grid, 1, wx.ALL | wx.EXPAND, 5)
-        self.panel.SetSizerAndFit(self.border)
+        self.buttonPanel.SetSizerAndFit(self.border)
 
-    def makeMenuBar(self):
-        fileMenu = wx.Menu()
-        helloItem = fileMenu.Append(-1, "&Hello...\tCtrl-H",
-                "Help string shown in status bar for this menu item")
-        fileMenu.AppendSeparator()
-        exitItem = fileMenu.Append(wx.ID_EXIT)
+    def CreateTextBoxes(self):
+        self.crtDateText = wx.StaticText(self.buttonPanel)
 
-        helpMenu = wx.Menu()
-        aboutItem = helpMenu.Append(wx.ID_ABOUT)
-
-        menuBar = wx.MenuBar()
-        menuBar.Append(fileMenu, "&File")
-        menuBar.Append(helpMenu, "&Help")
-
-        self.SetMenuBar(menuBar)
-
-    def makeButtons(self):
-        for button_name in MainFrame.BUTTONS:
-            button = wx.Button(self.panel, self._button_id, button_name)
-            button.name = button_name
-            button.Bind(wx.EVT_BUTTON, self.OnButton, button)
-            # Vertical position in grid is the same as button id
-            self.grid.Add(button, (self._button_id, 0), flag=wx.EXPAND)
-            self.buttons[button_name] = button
-            self._button_id += 1
+    def OnDateButton(self, event):
+        calendarFrame = Calendar(self, None, title="Calendar")
         
-        # Disable report buttons
-        self.DisableButton(MainFrame.MGMT_BUTTON)
-        self.DisableButton(MainFrame.JOURNAL_BUTTON)
-    
-    def OnButton(self, event):
-        name = event.GetEventObject().name
-        if name == MainFrame.DATE_BUTTON:
-            calendarFrame = Calendar(self, None, title="Calendar")
-        elif name == MainFrame.MGMT_BUTTON:
-            ManagementGenerator.Instance().Generate(self._current_date)
-            Info("Generated management report.")
-            infoDialog = wx.MessageDialog(self, "Raportul de gestiune a fost generat.", style=wx.OK)
-            infoDialog.ShowModal()
-            #ManagementGenerator.Instance().GetDataFrameList()
-
-        elif name == MainFrame.JOURNAL_BUTTON:
-            JournalGenerator.Instance().Generate(self._current_date)
-            Info("Generated input/output journal.")
-            infoDialog = wx.MessageDialog(self, "Jurnalul de incasari si plati a fost generat.", style=wx.OK)
-            infoDialog.ShowModal()
-        else:
-            Error("Unknown event.")
+    def OnManagementButton(self, event):
+        ManagementGenerator.Instance().Generate(self._current_date, sold_precedent=41160.21)
+        Info("Generated management report.")
+        infoDialog = wx.MessageDialog(self, "Raportul de gestiune a fost generat.", style=wx.OK)
+        infoDialog.ShowModal()
+        
+    def OnJournalButton(self, event):
+        JournalGenerator.Instance().Generate(self._current_date, plati_numerar=165370.82, plati_alte=8320.04, incasari=192189.86)
+        Info("Generated input/output journal.")
+        infoDialog = wx.MessageDialog(self, "Jurnalul de incasari si plati a fost generat.", style=wx.OK)
+        infoDialog.ShowModal()
 
     def SetCurrentDate(self, date_val):
         if date_val.IsLaterThan(wx.DateTime.Now()):
             color = wx.Colour(255, 0, 0)
             warningDateDialog = wx.MessageDialog(self, "Data selectata depaseste ziua curenta.", style=wx.OK)
             warningDateDialog.ShowModal()
-            # Disable report buttons
-            self.DisableButton(MainFrame.MGMT_BUTTON)
-            self.DisableButton(MainFrame.JOURNAL_BUTTON)
+            self.DisableReportButtons()
         else:
             color = wx.StaticText.GetClassDefaultAttributes().colFg
-            # Enable report buttons
-            self.EnableButton(MainFrame.MGMT_BUTTON)
-            self.EnableButton(MainFrame.JOURNAL_BUTTON)
+            self.EnableReportButtons()
 
         self.crtDateText.SetForegroundColour(color)
         self.crtDateText.SetLabel(date_val.Format("%d-%m-%Y"))
@@ -104,23 +93,20 @@ class MainFrame(wx.Frame):
         self._current_date = pd.to_datetime(date_val.Format("%Y%m%d"))
         Info("Current date: {}.".format(self._current_date))
 
-    def DisableButton(self, button_key):
-        if button_key in self.buttons:
-            self.buttons[button_key].Disable()
-        else:
-            Error("Key {} missing in buttons dictionary.".format(button_key))
+    def DisableReportButtons(self):
+        self.management_button.Disable()
+        self.journal_button.Disable()
 
-    def EnableButton(self, button_key):
-        if button_key in self.buttons:
-            self.buttons[button_key].Enable()
-        else:
-            Error("Key {} missing in buttons dictionary.".format(button_key))
+    def EnableReportButtons(self):
+        self.management_button.Enable()
+        self.journal_button.Enable()
 
 
 class Calendar(wx.Frame):
 
     def __init__(self, parent_frame, *args, **kargs):
         wx.Frame.__init__(self, *args, **kargs)
+
         self.parent = parent_frame
         self.cal = wx.adv.CalendarCtrl(self, 10, wx.DateTime.Now())
         self.cal.Bind(wx.adv.EVT_CALENDAR, self.OnDate)

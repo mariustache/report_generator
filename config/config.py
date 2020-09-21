@@ -45,8 +45,8 @@ class ConfigModule:
     def GetProduse(self):
         return self.GetDataFromKey("Common", "Produse")
 
-    def GetLastDate(self):
-        return self.GetDataFromKey("Common", "LastDate")
+    def GetStartDate(self):
+        return self.GetDataFromKey("Common", "StartDate")
     
     def GetSoldPrecedent(self):
         return self.GetDataFromKey("Management", "SoldPrecedent")

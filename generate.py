@@ -19,7 +19,7 @@ if __name__ == "__main__":
     parser_intrari = DBFParserIntrari(config.GetIntrari())
     parser_produse = DBFParserProduse(config.GetProduse())
 
-    last_date = config.GetLastDate()
+    start_date = config.GetLastDate()
     sold_precedent = config.GetSoldPrecedent()
     plati_numerar = config.GetPlatiNumerar()
     plati_alte = config.GetPlatiAlte()

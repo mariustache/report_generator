@@ -15,10 +15,16 @@ from utils import Info
 if __name__ == "__main__":
     config = ConfigModule()
 
-    parser_iesiri = DBFParserIesiri(config.GetDataFromKey("Iesiri"))
-    parser_intrari = DBFParserIntrari(config.GetDataFromKey("Intrari"))
-    parser_produse = DBFParserProduse(config.GetDataFromKey("Produse"))
+    parser_iesiri = DBFParserIesiri(config.GetIesiri())
+    parser_intrari = DBFParserIntrari(config.GetIntrari())
+    parser_produse = DBFParserProduse(config.GetProduse())
 
+    last_date = config.GetLastDate()
+    sold_precedent = config.GetSoldPrecedent()
+    plati_numerar = config.GetPlatiNumerar()
+    plati_alte = config.GetPlatiAlte()
+    incasari = config.GetIncasari()
+    
     journal_generator = JournalGenerator()
     management_generator = ManagementGenerator()
     

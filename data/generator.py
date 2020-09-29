@@ -19,6 +19,24 @@ class ReportGenerator:
 
     def GetDataFrameList(self):
         return self._out_df_list
+    
+    def GetInputDfFromDate(self, _date):
+        return DBFParserIntrari.GetParser().GetDataWithDate(_date)
+
+    def GetOutputDfFromDate(self, _date):
+        return DBFParserIesiri.GetParser().GetDataWithDate(_date)
+
+    def SaveFile(self, df_list):
+        pd.set_option('display.expand_frame_repr', False)
+        writer = pd.ExcelWriter(r'D:\git\report_generator\data\\' + self.OUTPUT_FILE)
+        
+        _start = 0
+        for _df in df_list:
+            print(_df)
+            _df.to_excel(writer, self.NAME, startrow=_start)
+            _start += len(_df) + 2
+
+        writer.save()
 
     @classmethod
     def Instance(cls):
@@ -28,67 +46,92 @@ class ReportGenerator:
 class JournalGenerator(ReportGenerator):
 
     COLUMNS = ["Data", "Documentul (felul, nr.)", "Felul operatiunii (explicatii)", "Incasari (numerar)", "Plati (numerar)", "Plati (alte)"]
+    OUTPUT_FILE = "jurnal_incasari_si_plati.xlsx"
+    NAME = "Jurnal de incasari si plati"
 
     def __init__(self, start_date, plati_numerar=0, plati_alte=0, incasari=0):
         ReportGenerator.__init__(self)
         JournalGenerator.INSTANCE = self
 
-        self.start_date = start_date
-        self.plati_numerar = plati_numerar
-        self.plati_alte = plati_alte
-        self.incasari = incasari
+        self.start_date = pd.to_datetime(start_date)
+        self.plati_numerar = float(plati_numerar)
+        self.plati_alte = float(plati_alte)
+        self.incasari = float(incasari)
     
-    def Generate(self, start_date, stop_date, plati_numerar=0, plati_alte=0, incasari=0):
+    def Generate(self, start_date, stop_date):
+        # Get last values for inputs based on the difference between starte_date passed as input
+        # and latest start date found in config file.
+        plati_numerar, plati_alte, incasari = self.UpdateInputsForDate(self.start_date, start_date, self.plati_numerar, self.plati_alte, self.incasari)
         current_date = start_date
-        intrari_df = DBFParserIntrari.GetParser().GetDataWithDate(current_date)
-        iesiri_df = DBFParserIesiri.GetParser().GetDataWithDate(current_date)
+        intrari_df = self.GetInputDfFromDate(current_date)
+        iesiri_df = self.GetOutputDfFromDate(current_date)
 
         while current_date <= stop_date:
             _out_list = list()
-            if not intrari_df.empty and not iesiri_df.empty:
-                _out_list.append([current_date.strftime("%d-%m-%Y"), 0, "TOTAL PRECEDENT", incasari, plati_numerar, plati_alte])
-                for index, row in intrari_df.iterrows():
-                    if row["TIP"] == "C":
-                        _out_list.append([row["DATA"].strftime("%d-%m-%Y"), row["NR_INTRARE"], "Alimentare {}".format(row["DENUMIRE"]), 0, 0, row["TOTAL"]])
-                        plati_alte += row["TOTAL"]
-                    else:
-                        _out_list.append([row["DATA"].strftime("%d-%m-%Y"), row["NR_INTRARE"], "Cumparare marfa {}".format(row["DENUMIRE"]), 0, row["TOTAL"], 0])
-                        plati_numerar += row["TOTAL"]
-                for index, row in iesiri_df.iterrows():
-                    _out_list.append([row["DATA"].strftime("%d-%m-%Y"), row["NR_IESIRE"], "Vanzare marfa {}".format(row["DENUMIRE"]), row["TOTAL"], 0, 0])
-                    incasari += row["TOTAL"]
-                
-                _out_list.append([current_date.strftime("%d-%m-%Y"), 0, "TOTAL FINAL", incasari, plati_numerar, plati_alte])
+            # Add current data to header.
+            _out_list.append([current_date.strftime("%d-%m-%Y"), 0, "TOTAL PRECEDENT", incasari, plati_numerar, plati_alte])
+            # Update data values. Start and stop date are the same: current date.
+            plati_numerar, plati_alte, incasari = self.UpdateInputsForDate(current_date, current_date, self.plati_numerar, self.plati_alte, self.incasari)
+
+            rows = intrari_df.loc[intrari_df["TIP"] == "C"].apply(self.CreateAlteRow, axis='columns')
+            [_out_list.append(row) for row in rows if not rows.empty]
+
+            rows = intrari_df.loc[intrari_df["TIP"] != "C"].apply(self.CreateNumerarRow, axis='columns')
+            [_out_list.append(row) for row in rows if not rows.empty]
+
+            rows = iesiri_df.apply(self.CreateIncasariRow, axis='columns')
+            [_out_list.append(row) for row in rows if not rows.empty]
+
+            # Add updated data to footer.    
+            _out_list.append([current_date.strftime("%d-%m-%Y"), 0, "TOTAL FINAL", incasari, plati_numerar, plati_alte])
             current_date = NextDay(current_date)
-            intrari_df = DBFParserIntrari.GetParser().GetDataWithDate(current_date)
-            iesiri_df = DBFParserIesiri.GetParser().GetDataWithDate(current_date)
+            intrari_df = self.GetInputDfFromDate(current_date)
+            iesiri_df = self.GetOutputDfFromDate(current_date)
 
             if _out_list:
                 self._out_df_list.append(pd.DataFrame(_out_list, columns=self.COLUMNS))
         
-        pd.set_option('display.expand_frame_repr', False)
-        for _df in self._out_df_list:
-            print(_df)
+        self.SaveFile(self._out_df_list)
+    
+    def UpdateInputsForDate(self, start_date, stop_date, plati_numerar, plati_alte, incasari):
         
-        writer = pd.ExcelWriter(r'D:\git\report_generator\data\jurnal_incasari_si_plati.xlsx')
-        _start = 0
-        for _df in self._out_df_list:
-            _df.to_excel(writer, "Jurnal incasari si plati", startrow=_start)
-            _start += len(_df) + 2
-        writer.save()
+        intrari_df = self.GetInputDfFromDate(start_date)
+        iesiri_df = self.GetOutputDfFromDate(start_date)
+        
+        while start_date <= stop_date:
+            if not intrari_df.empty and not iesiri_df.empty:
+                plati_numerar += intrari_df["TOTAL"].sum()
+                plati_alte += intrari_df.loc[intrari_df["TIP"] == "C"].sum()
+                incasari += iesiri_df["TOTAL"].sum()
+
+            start_date = NextDay(start_date)
+            intrari_df = self.GetInputDfFromDate(start_date)
+            iesiri_df = self.GetOutputDfFromDate(start_date)
+        return plati_numerar, plati_alte, incasari
+
+    def CreateAlteRow(self, row):
+        return [row["DATA"].strftime("%d-%m-%Y"), row["NR_INTRARE"], "Cheltuieli {}".format(row["DENUMIRE"]), 0, 0, row["TOTAL"]]
+
+    def CreateNumerarRow(self, row):
+        return [row["DATA"].strftime("%d-%m-%Y"), row["NR_INTRARE"], "Cumparare marfa {}".format(row["DENUMIRE"]), 0, row["TOTAL"], 0]
+    
+    def CreateIncasariRow(self, row):
+        return [row["DATA"].strftime("%d-%m-%Y"), row["NR_IESIRE"], "Vanzare marfa {}".format(row["DENUMIRE"]), row["TOTAL"], 0, 0]
 
 
 class ManagementGenerator(ReportGenerator):
     
     COLUMNS = ["Numar document", "Explicatii", "Valoare lei (Marfuri)"]
+    OUTPUT_FILE = "raport_de_gestiune.xlsx"
+    NAME = "Raport de gestiune"
 
     def __init__(self, start_date, sold_precedent):
         ReportGenerator.__init__(self)
         ManagementGenerator.INSTANCE = self
-        self.start_date = start_date
-        self.sold_precedent = sold_precedent
+        self.start_date = pd.to_datetime(start_date)
+        self.sold_precedent = float(sold_precedent)
     
-    def Generate(self, start_date, stop_date, sold_precedent=0):
+    def Generate(self, start_date, stop_date):
         """
         Intrari, Iesiri and Produse are needed.
         Two tables.
@@ -101,53 +144,67 @@ class ManagementGenerator(ReportGenerator):
             Columns: same
             At the end of the table, print Total vanzari + iesiri (end sum of first table minus the sum of all Iesiri values)
         """
+        sold = self.UpdateSold(self.start_date, start_date, self.sold_precedent)
         current_date = start_date
-        intrari_df = DBFParserIntrari.GetParser().GetDataWithDate(current_date)
-        iesiri_df = DBFParserIesiri.GetParser().GetDataWithDate(current_date)
+        intrari_df = self.GetInputDfFromDate(current_date)
+        iesiri_df = self.GetOutputDfFromDate(current_date)
 
         while current_date <= stop_date:
             _out_list = list()
-            if not intrari_df.empty and not iesiri_df.empty:
-                _out_list.append(["Data: {}".format(current_date.strftime("%d-%m-%Y")), "Sold precedent", sold_precedent])
-                
-                _sum = 0
-                for index, row in intrari_df.iterrows():
-                    total_sum = self.GetProductSumFromId(row["ID_INTRARE"])
-                    _out_list.append([row["NR_NIR"], "Cumparare marfa {}".format(row["DENUMIRE"]), total_sum])
-                    _sum += total_sum
-                sold_precedent += _sum
-                
-                _out_list.append(["", "Total intrari + sold", sold_precedent])
-                _sum = 0
-                for index, row in iesiri_df.iterrows():
-                    _out_list.append([row["NR_IESIRE"], "Vanzare marfa {}".format(row["DENUMIRE"]), row["TOTAL"]])
-                    _sum += row["TOTAL"]
-                sold_final = sold_precedent - _sum
-                
-                _out_list.append(["", "Total vanzari + iesiri", sold_final])
-                _out_list.append(["", "Sold final", sold_final])
-                
-                # Sold final for current date becomes sold precedent for the next date.
-                sold_precedent = sold_final
+            # Add header.
+            _out_list.append(["Data: {}".format(current_date.strftime("%d-%m-%Y")), "Sold precedent", sold])
+            # Update sold value. Start and stop date are the same: current date.
+            sold = self.UpdateSold(current_date, current_date, sold, use_iesiri=False)
+            
+            rows = intrari_df.apply(self.CreateIntrariRow, axis='columns')
+            for row in rows:
+                _out_list.append(row)
+
+            # Add mid header.
+            _out_list.append(["", "Total intrari + sold", sold])
+            
+            sold = self.UpdateSold(current_date, current_date, sold, use_intrari=False)
+            rows = iesiri_df.apply(self.CreateIesiriRow, axis='columns')
+            for row in rows:
+                _out_list.append(row)
+
+            # Add footer.
+            _out_list.append(["", "Total vanzari + iesiri", sold])
+            _out_list.append(["", "Sold final", sold])
                 
             current_date = NextDay(current_date)
-            intrari_df = DBFParserIntrari.GetParser().GetDataWithDate(current_date)
-            iesiri_df = DBFParserIesiri.GetParser().GetDataWithDate(current_date)
+            intrari_df = self.GetInputDfFromDate(current_date)
+            iesiri_df = self.GetOutputDfFromDate(current_date)
         
             if _out_list:
+                #print(_out_list)
                 self._out_df_list.append(pd.DataFrame(_out_list, columns=self.COLUMNS))
         
-        pd.set_option('display.expand_frame_repr', False)
-        for _df in self._out_df_list:
-            print(_df)
-            
-        writer = pd.ExcelWriter(r'D:\git\report_generator\data\raport_de_gestiune.xlsx')
-        _start = 0
-        for _df in self._out_df_list:
-            _df.to_excel(writer, "Raport de gestiune", startrow=_start)
-            _start += len(_df) + 2
-        writer.save()
+        self.SaveFile(self._out_df_list)
     
     def GetProductSumFromId(self, id_intrare):
         produse_df = DBFParserProduse.GetParser().GetDataWithIdIntrare(id_intrare)
         return produse_df.apply(lambda row: row["CANTITATE"] * row["PRET_VANZ"], axis='columns').sum()
+
+    def UpdateSold(self, start_date, stop_date, sold, use_intrari=True, use_iesiri=True):
+        intrari_df = self.GetInputDfFromDate(start_date)
+        iesiri_df = self.GetOutputDfFromDate(start_date)
+        
+        while start_date <= stop_date:
+            if not intrari_df.empty and not iesiri_df.empty:
+                if use_intrari:
+                    sold += intrari_df["ID_INTRARE"].apply(self.GetProductSumFromId).sum()
+                if use_iesiri:
+                    sold -= iesiri_df["TOTAL"].sum()
+
+            start_date = NextDay(start_date)
+            intrari_df = self.GetInputDfFromDate(start_date)
+            iesiri_df = self.GetOutputDfFromDate(start_date)
+            
+        return sold
+    
+    def CreateIntrariRow(self, row):
+        return [row["NR_NIR"], "Cumparare marfa {}".format(row["DENUMIRE"]), self.GetProductSumFromId(row["ID_INTRARE"])]
+
+    def CreateIesiriRow(self, row):
+        return [row["NR_IESIRE"], "Vanzare marfa {}".format(row["DENUMIRE"]), row["TOTAL"]]

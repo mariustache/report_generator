@@ -78,7 +78,7 @@ class MainFrame(wx.Frame):
         self.stopDateText.SetLabel("Data de stop")
         
     def OnManagementButton(self, event):
-        ManagementGenerator.Instance().Generate(self._pd_start_date, self._pd_stop_date, sold_precedent=41160.21)
+        ManagementGenerator.Instance().Generate(self._pd_start_date, self._pd_stop_date)
         Info("Generated management report.")
         infoDialog = wx.MessageDialog(self, "Raportul de gestiune a fost generat.", style=wx.OK)
         infoDialog.ShowModal()
@@ -86,7 +86,7 @@ class MainFrame(wx.Frame):
     def OnJournalButton(self, event):
         start_date = pd.to_datetime(self._wx_start_date.Format("%Y%m%d"))
         stop_date = pd.to_datetime(self._wx_stop_date.Format("%Y%m%d"))
-        JournalGenerator.Instance().Generate(self._pd_start_date, self._pd_stop_date, plati_numerar=165370.82, plati_alte=8320.04, incasari=192189.86)
+        JournalGenerator.Instance().Generate(self._pd_start_date, self._pd_stop_date)
         Info("Generated input/output journal.")
         infoDialog = wx.MessageDialog(self, "Jurnalul de incasari si plati a fost generat.", style=wx.OK)
         infoDialog.ShowModal()

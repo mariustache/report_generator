@@ -61,7 +61,11 @@ class JournalGenerator(ReportGenerator):
     def Generate(self, start_date, stop_date):
         # Get last values for inputs based on the difference between starte_date passed as input
         # and latest start date found in config file.
-        plati_numerar, plati_alte, incasari = self.UpdateInputsForDate(self.start_date, start_date, self.plati_numerar, self.plati_alte, self.incasari)
+        plati_numerar = self.plati_numerar
+        plati_alte = self.plati_alte
+        incasari = self.incasari
+        if self.start_date < start_date:
+            plati_numerar, plati_alte, incasari = self.UpdateInputsForDate(self.start_date, start_date, plati_numerar, plati_alte, incasari)
         current_date = start_date
         intrari_df = self.GetInputDfFromDate(current_date)
         iesiri_df = self.GetOutputDfFromDate(current_date)
@@ -71,7 +75,7 @@ class JournalGenerator(ReportGenerator):
             # Add current data to header.
             _out_list.append([current_date.strftime("%d-%m-%Y"), 0, "TOTAL PRECEDENT", incasari, plati_numerar, plati_alte])
             # Update data values. Start and stop date are the same: current date.
-            plati_numerar, plati_alte, incasari = self.UpdateInputsForDate(current_date, current_date, self.plati_numerar, self.plati_alte, self.incasari)
+            plati_numerar, plati_alte, incasari = self.UpdateInputsForDate(current_date, current_date, plati_numerar, plati_alte, incasari)
 
             rows = intrari_df.loc[intrari_df["TIP"] == "C"].apply(self.CreateAlteRow, axis='columns')
             [_out_list.append(row) for row in rows if not rows.empty]
@@ -101,7 +105,9 @@ class JournalGenerator(ReportGenerator):
         while start_date <= stop_date:
             if not intrari_df.empty and not iesiri_df.empty:
                 plati_numerar += intrari_df["TOTAL"].sum()
-                plati_alte += intrari_df.loc[intrari_df["TIP"] == "C"].sum()
+                cheltuieli = intrari_df.loc[intrari_df["TIP"] == "C"]
+                if not cheltuieli.empty:
+                    plati_alte += cheltuieli["TOTAL"].sum()
                 incasari += iesiri_df["TOTAL"].sum()
 
             start_date = NextDay(start_date)
@@ -144,7 +150,9 @@ class ManagementGenerator(ReportGenerator):
             Columns: same
             At the end of the table, print Total vanzari + iesiri (end sum of first table minus the sum of all Iesiri values)
         """
-        sold = self.UpdateSold(self.start_date, start_date, self.sold_precedent)
+        sold = self.sold_precedent
+        if self.start_date < start_date:
+            sold = self.UpdateSold(self.start_date, start_date, self.sold_precedent)
         current_date = start_date
         intrari_df = self.GetInputDfFromDate(current_date)
         iesiri_df = self.GetOutputDfFromDate(current_date)

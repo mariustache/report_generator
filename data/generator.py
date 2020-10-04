@@ -165,16 +165,14 @@ class ManagementGenerator(ReportGenerator):
             sold = self.UpdateSold(current_date, current_date, sold, use_iesiri=False)
             
             rows = intrari_df.apply(self.CreateIntrariRow, axis='columns')
-            for row in rows:
-                _out_list.append(row)
+            [_out_list.append(row) for row in rows if not rows.empty]
 
             # Add mid header.
             _out_list.append(["", "Total intrari + sold", sold])
             
             sold = self.UpdateSold(current_date, current_date, sold, use_intrari=False)
             rows = iesiri_df.apply(self.CreateIesiriRow, axis='columns')
-            for row in rows:
-                _out_list.append(row)
+            [_out_list.append(row) for row in rows if not rows.empty]
 
             # Add footer.
             _out_list.append(["", "Total vanzari + iesiri", sold])
@@ -185,7 +183,6 @@ class ManagementGenerator(ReportGenerator):
             iesiri_df = self.GetOutputDfFromDate(current_date)
         
             if _out_list:
-                #print(_out_list)
                 self._out_df_list.append(pd.DataFrame(_out_list, columns=self.COLUMNS))
         
         self.SaveFile(self._out_df_list)

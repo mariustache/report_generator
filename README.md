@@ -1,9 +1,9 @@
 # Accounting app
 
-For now, it uses .dbf files as input and generates three types of reports.
+A basic accounting application used by a small marketplace business in order to generate daily reports.
 
-TODO: 
- - Define architecture
- - Create a Printer Frame: print, print preview, page setup.
- - Convert DataFrame to printout format
- 
+The input comes from the marketplace itself (.DBF format) and is processed by this application.
+There are two types of reports:
+ - Management report
+ - Buy/sell journal report
+
